@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -70,7 +70,7 @@
 </nav>
 
 <!-- Auth modal -->
-<div class="modal" id="auth-modal">
+<div class="modal" id="auth-modal" style="position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:20px">
   <div class="modal-backdrop" data-close></div>
   <div class="modal-card">
     <button class="modal-close" data-close>✕</button>
@@ -279,6 +279,6 @@
 
 <canvas id="confetti" class="confetti"></canvas>
 
-<script src="app.js"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

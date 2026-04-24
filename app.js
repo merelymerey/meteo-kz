@@ -531,11 +531,13 @@ function updateAuthUI(){
 // Open / close modal
 const modal = document.getElementById('auth-modal');
 function openModal(tab){
-  modal.classList.add('show');
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => modal.classList.add('show'));
   if(tab) switchTab(tab);
 }
 function closeModal(){
   modal.classList.remove('show');
+  setTimeout(() => { modal.style.display = 'none'; }, 300);
   document.querySelectorAll('.auth-error').forEach(e => e.classList.remove('show'));
   document.querySelectorAll('.auth-form').forEach(f => f.reset());
 }
