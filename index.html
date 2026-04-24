@@ -58,9 +58,67 @@
   <div class="nav-actions">
     <button id="sound" class="icon-btn sound-btn" title="Дыбыс">🔇</button>
     <button id="theme" class="icon-btn" title="Тема"></button>
-    <button class="btn-primary">Кіру</button>
+    <button id="auth-btn" class="btn-primary">Кіру</button>
+    <div id="user-menu" class="user-menu hidden">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-drop">
+        <div class="user-email" id="user-email"></div>
+        <button id="logout-btn" class="user-drop-btn">🚪 Шығу</button>
+      </div>
+    </div>
   </div>
 </nav>
+
+<!-- Auth modal -->
+<div class="modal" id="auth-modal">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card">
+    <button class="modal-close" data-close>✕</button>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Кіру</button>
+      <button class="auth-tab" data-tab="signup">Тіркелу</button>
+    </div>
+
+    <!-- Login form -->
+    <form class="auth-form active" id="form-login">
+      <h2 class="auth-title">Қош келдіңіз 👋</h2>
+      <p class="auth-sub">Аккаунтыңызға кіріңіз</p>
+      <label class="auth-field">
+        <span>Email</span>
+        <input type="email" name="email" required placeholder="you@example.com">
+      </label>
+      <label class="auth-field">
+        <span>Құпиясөз</span>
+        <input type="password" name="password" required placeholder="••••••••" minlength="4">
+      </label>
+      <div class="auth-error" id="login-error"></div>
+      <button type="submit" class="auth-submit">Кіру</button>
+      <div class="auth-hint">Аккаунтыңыз жоқ па? <a data-switch="signup">Тіркеліңіз</a></div>
+    </form>
+
+    <!-- Signup form -->
+    <form class="auth-form" id="form-signup">
+      <h2 class="auth-title">Жаңа аккаунт ✨</h2>
+      <p class="auth-sub">Meteo.KZ-ке тіркеліңіз</p>
+      <label class="auth-field">
+        <span>Атыңыз</span>
+        <input type="text" name="name" required placeholder="Айбек">
+      </label>
+      <label class="auth-field">
+        <span>Email</span>
+        <input type="email" name="email" required placeholder="you@example.com">
+      </label>
+      <label class="auth-field">
+        <span>Құпиясөз</span>
+        <input type="password" name="password" required placeholder="Кемінде 4 таңба" minlength="4">
+      </label>
+      <div class="auth-error" id="signup-error"></div>
+      <button type="submit" class="auth-submit">Тіркелу</button>
+      <div class="auth-hint">Аккаунтыңыз бар ма? <a data-switch="login">Кіріңіз</a></div>
+    </form>
+  </div>
+</div>
 
 <!-- Hero -->
 <header class="hero" id="forecast">

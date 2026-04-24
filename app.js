@@ -482,6 +482,138 @@ document.getElementById('sound').addEventListener('click', () => {
 });
 
 // ========================================================
+// AUTH (localStorage-based demo)
+// ========================================================
+const AUTH_KEY = 'meteo_auth_user';
+const USERS_KEY = 'meteo_auth_users';
+
+function getUsers(){ try { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); } catch { return []; } }
+function saveUsers(u){ localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+function getCurrentUser(){ try { return JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch { return null; } }
+function setCurrentUser(u){ if(u) localStorage.setItem(AUTH_KEY, JSON.stringify(u)); else localStorage.removeItem(AUTH_KEY); }
+
+// Simple hash (demo only — not real security)
+function hash(s){
+  let h = 0;
+  for(let i=0;i<s.length;i++){ h = ((h<<5)-h) + s.charCodeAt(i); h |= 0; }
+  return h.toString(36);
+}
+
+function showToast(text){
+  let t = document.querySelector('.toast');
+  if(!t){
+    t = document.createElement('div');
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = text;
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+function updateAuthUI(){
+  const user = getCurrentUser();
+  const authBtn = document.getElementById('auth-btn');
+  const userMenu = document.getElementById('user-menu');
+  const userAvatar = document.getElementById('user-avatar');
+  const userEmail = document.getElementById('user-email');
+  if(user){
+    authBtn.classList.add('hidden');
+    userMenu.classList.remove('hidden');
+    userAvatar.textContent = (user.name || user.email || '?').charAt(0).toUpperCase();
+    userEmail.textContent = user.email;
+  } else {
+    authBtn.classList.remove('hidden');
+    userMenu.classList.add('hidden');
+  }
+}
+
+// Open / close modal
+const modal = document.getElementById('auth-modal');
+function openModal(tab){
+  modal.classList.add('show');
+  if(tab) switchTab(tab);
+}
+function closeModal(){
+  modal.classList.remove('show');
+  document.querySelectorAll('.auth-error').forEach(e => e.classList.remove('show'));
+  document.querySelectorAll('.auth-form').forEach(f => f.reset());
+}
+document.getElementById('auth-btn').addEventListener('click', () => openModal('login'));
+modal.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModal));
+document.addEventListener('keydown', e => { if(e.key==='Escape' && modal.classList.contains('show')) closeModal(); });
+
+// Tabs
+function switchTab(tab){
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.auth-form').forEach(f => f.classList.toggle('active', f.id === 'form-'+tab));
+  document.querySelectorAll('.auth-error').forEach(e => e.classList.remove('show'));
+}
+document.querySelectorAll('.auth-tab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+document.querySelectorAll('[data-switch]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); switchTab(a.dataset.switch); }));
+
+function showError(id, msg){
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+// Signup
+document.getElementById('form-signup').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target;
+  const name = f.name.value.trim();
+  const email = f.email.value.trim().toLowerCase();
+  const password = f.password.value;
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showError('signup-error','Email дұрыс емес'); return; }
+  const users = getUsers();
+  if(users.find(u => u.email === email)){ showError('signup-error','Бұл email тіркелген'); return; }
+  const user = { name, email, passHash: hash(password), createdAt: Date.now(), favorites: [] };
+  users.push(user);
+  saveUsers(users);
+  setCurrentUser({ name, email, createdAt: user.createdAt });
+  closeModal();
+  updateAuthUI();
+  showToast(`Қош келдіңіз, ${name}! 🎉`);
+  fireConfetti();
+});
+
+// Login
+document.getElementById('form-login').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target;
+  const email = f.email.value.trim().toLowerCase();
+  const password = f.password.value;
+  const users = getUsers();
+  const user = users.find(u => u.email === email);
+  if(!user){ showError('login-error','Email табылмады'); return; }
+  if(user.passHash !== hash(password)){ showError('login-error','Құпиясөз қате'); return; }
+  setCurrentUser({ name: user.name, email: user.email, createdAt: user.createdAt });
+  closeModal();
+  updateAuthUI();
+  showToast(`Қайта қош келдіңіз, ${user.name}! 👋`);
+});
+
+// User menu dropdown
+document.getElementById('user-avatar').addEventListener('click', () => {
+  document.getElementById('user-menu').classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  if(!e.target.closest('#user-menu')) document.getElementById('user-menu').classList.remove('open');
+});
+
+// Logout
+document.getElementById('logout-btn').addEventListener('click', () => {
+  const user = getCurrentUser();
+  setCurrentUser(null);
+  updateAuthUI();
+  showToast(`Сау болыңыз, ${user?.name || 'user'}!`);
+});
+
+// Init on load
+updateAuthUI();
+
+// ========================================================
 // Init
 // ========================================================
 loadCity('Almaty', 43.238, 76.889);
