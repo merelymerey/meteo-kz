@@ -1,137 +1,151 @@
-// ===============================================================
-// Meteo.KZ — interactive front-end
-// Data: Open-Meteo API (free, no key needed)
-// ===============================================================
+// =============================================================
+// Meteo.KZ v2 — with extra cool effects
+// =============================================================
 
 const WMO = {
-  0:  {emoji:'☀️', text:'Ашық'},
-  1:  {emoji:'🌤️', text:'Негізінен ашық'},
-  2:  {emoji:'⛅', text:'Жартылай бұлтты'},
-  3:  {emoji:'☁️', text:'Бұлтты'},
-  45: {emoji:'🌫️', text:'Тұман'},
-  48: {emoji:'🌫️', text:'Қырау тұман'},
-  51: {emoji:'🌦️', text:'Жеңіл сіркіреме'},
-  53: {emoji:'🌦️', text:'Сіркіреме'},
-  55: {emoji:'🌧️', text:'Қалың сіркіреме'},
-  61: {emoji:'🌦️', text:'Жеңіл жаңбыр'},
-  63: {emoji:'🌧️', text:'Жаңбыр'},
-  65: {emoji:'🌧️', text:'Нөсер'},
-  71: {emoji:'🌨️', text:'Жеңіл қар'},
-  73: {emoji:'🌨️', text:'Қар'},
-  75: {emoji:'❄️', text:'Қалың қар'},
-  77: {emoji:'🌨️', text:'Қар дәні'},
-  80: {emoji:'🌦️', text:'Жаңбыр жауады'},
-  81: {emoji:'🌧️', text:'Қатты жаңбыр'},
-  82: {emoji:'⛈️', text:'Күшті нөсер'},
-  85: {emoji:'🌨️', text:'Қар жауады'},
-  86: {emoji:'❄️', text:'Қатты қар'},
-  95: {emoji:'⛈️', text:'Найзағай'},
-  96: {emoji:'⛈️', text:'Найзағай + бұршақ'},
-  99: {emoji:'⛈️', text:'Күшті найзағай'},
+  0:{e:'☀️',t:'Ашық',fx:'clear'},
+  1:{e:'🌤️',t:'Негізінен ашық',fx:'clear'},
+  2:{e:'⛅',t:'Жартылай бұлтты',fx:'clear'},
+  3:{e:'☁️',t:'Бұлтты',fx:'cloud'},
+  45:{e:'🌫️',t:'Тұман',fx:'fog'},
+  48:{e:'🌫️',t:'Қырау тұман',fx:'fog'},
+  51:{e:'🌦️',t:'Жеңіл сіркіреме',fx:'rain'},
+  53:{e:'🌦️',t:'Сіркіреме',fx:'rain'},
+  55:{e:'🌧️',t:'Қалың сіркіреме',fx:'rain'},
+  61:{e:'🌦️',t:'Жеңіл жаңбыр',fx:'rain'},
+  63:{e:'🌧️',t:'Жаңбыр',fx:'rain'},
+  65:{e:'🌧️',t:'Нөсер',fx:'rain'},
+  71:{e:'🌨️',t:'Жеңіл қар',fx:'snow'},
+  73:{e:'🌨️',t:'Қар',fx:'snow'},
+  75:{e:'❄️',t:'Қалың қар',fx:'snow'},
+  77:{e:'🌨️',t:'Қар дәні',fx:'snow'},
+  80:{e:'🌦️',t:'Жаңбыр жауады',fx:'rain'},
+  81:{e:'🌧️',t:'Қатты жаңбыр',fx:'rain'},
+  82:{e:'⛈️',t:'Күшті нөсер',fx:'thunder'},
+  85:{e:'🌨️',t:'Қар жауады',fx:'snow'},
+  86:{e:'❄️',t:'Қатты қар',fx:'snow'},
+  95:{e:'⛈️',t:'Найзағай',fx:'thunder'},
+  96:{e:'⛈️',t:'Найзағай + бұршақ',fx:'thunder'},
+  99:{e:'⛈️',t:'Күшті найзағай',fx:'thunder'}
 };
-
 const DAYS = ['Жс','Дс','Сс','Ср','Бс','Жм','Сб'];
 const MONTHS = ['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан'];
+const CITY_KK = {'Almaty':'Алматы','Astana':'Астана','Shymkent':'Шымкент','Aktobe':'Ақтөбе','Atyrau':'Атырау','Oral':'Орал','Kostanay':'Қостанай'};
 
-let currentUnit = 'c';
-let currentCity = 'Almaty';
-let currentCoords = {lat:43.238, lon:76.889};
-let currentData = null;
+let currentUnit='c', currentCity='Almaty', currentCoords={lat:43.238,lon:76.889}, currentData=null;
+let currentFx='clear';
 
-// ===============================================================
-// Fetch weather
-// ===============================================================
-async function fetchWeather(lat, lon) {
+// ========================================================
+// API
+// ========================================================
+async function fetchWeather(lat, lon){
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
-    + `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure`
+    + `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,surface_pressure`
     + `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum`
     + `&timezone=auto&forecast_days=7`;
   const r = await fetch(url);
-  if (!r.ok) throw new Error('API error');
+  if(!r.ok) throw new Error('API error');
   return r.json();
 }
 
-// ===============================================================
-// Convert temperature
-// ===============================================================
-function conv(c){ return currentUnit === 'f' ? c*9/5+32 : c; }
-function unitSymbol(){ return currentUnit === 'f' ? '°F' : '°C'; }
+const conv = c => currentUnit==='f' ? c*9/5+32 : c;
+const unitSym = () => currentUnit==='f' ? '°F' : '°C';
 
-// ===============================================================
-// Render current weather card
-// ===============================================================
-function renderCurrent(data, cityName) {
+// ========================================================
+// Rendering
+// ========================================================
+function setFavicon(emoji){
+  const link = document.getElementById('favicon');
+  link.href = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${emoji}</text></svg>`;
+}
+
+function renderCurrent(data, city){
   const c = data.current;
-  const w = WMO[c.weather_code] || {emoji:'🌡️', text:'—'};
-  const card = document.getElementById('weather-card');
-  card.innerHTML = `
+  const w = WMO[c.weather_code] || {e:'🌡️',t:'—',fx:'clear'};
+  setFavicon(w.e);
+  currentFx = w.fx;
+  startWeatherFx(w.fx);
+
+  document.getElementById('weather-card').innerHTML = `
     <div class="wc-head">
       <div>
-        <div class="wc-city">${cityName}, ҚАЗАҚСТАН</div>
+        <div class="wc-city">${city}, ҚАЗАҚСТАН</div>
         <div class="wc-title">${new Date().getDate()} ${MONTHS[new Date().getMonth()]}</div>
         <div class="wc-meta">${DAYS[new Date().getDay()]}, ${new Date().toLocaleTimeString('kk-KZ',{hour:'2-digit',minute:'2-digit'})}</div>
       </div>
-      <div class="wc-emoji">${w.emoji}</div>
+      <div class="wc-emoji">${w.e}</div>
     </div>
-    <div class="wc-temp">${Math.round(conv(c.temperature_2m))}<sup>${unitSymbol()}</sup></div>
-    <div class="wc-cond">${w.text} · Сезілетін ${Math.round(conv(c.apparent_temperature))}${unitSymbol()}</div>
+    <div class="wc-temp">${Math.round(conv(c.temperature_2m))}<sup>${unitSym()}</sup></div>
+    <div class="wc-cond">${w.t} · Сезілетін ${Math.round(conv(c.apparent_temperature))}${unitSym()}</div>
     <div class="wc-stats">
       <div class="wc-stat"><div class="v">💨 ${Math.round(c.wind_speed_10m)}</div><div class="l">км/сағ</div></div>
       <div class="wc-stat"><div class="v">💧 ${c.relative_humidity_2m}%</div><div class="l">Ылғал</div></div>
       <div class="wc-stat"><div class="v">🧭 ${Math.round(c.surface_pressure)}</div><div class="l">гПа</div></div>
     </div>
   `;
-}
 
-// ===============================================================
-// Render 7-day forecast
-// ===============================================================
-function renderForecast(data) {
-  const d = data.daily;
-  const grid = document.getElementById('forecast-grid');
-  grid.innerHTML = '';
-  for (let i=0; i<7; i++) {
-    const date = new Date(d.time[i]);
-    const w = WMO[d.weather_code[i]] || {emoji:'🌡️', text:'—'};
-    const card = document.createElement('div');
-    card.className = 'fc-card';
-    card.style.animation = `card-in .5s ease ${i*0.05}s both`;
-    card.innerHTML = `
-      <div class="fc-day">${i===0?'Бүгін':DAYS[date.getDay()]}</div>
-      <div class="fc-date">${date.getDate()} ${MONTHS[date.getMonth()].slice(0,3)}</div>
-      <div class="fc-icon">${w.emoji}</div>
-      <div class="fc-hi">${Math.round(conv(d.temperature_2m_max[i]))}${unitSymbol()}</div>
-      <div class="fc-lo">${Math.round(conv(d.temperature_2m_min[i]))}${unitSymbol()}</div>
-    `;
-    grid.appendChild(card);
+  // Wind compass
+  const arr = document.getElementById('compass-arrow');
+  if(arr){ arr.style.transform = `rotate(${c.wind_direction_10m}deg)`; }
+  const wt = document.getElementById('wind-title');
+  if(wt) wt.textContent = `${Math.round(c.wind_speed_10m)} км/сағ`;
+
+  // Sun arc
+  if(data.daily && data.daily.sunrise){
+    const sr = new Date(data.daily.sunrise[0]);
+    const ss = new Date(data.daily.sunset[0]);
+    const now = new Date();
+    let t = (now - sr) / (ss - sr);
+    t = Math.max(0, Math.min(1, t));
+    const x = 40 + t * 320;
+    const y = 200 - Math.sin(t * Math.PI) * 180;
+    const dot = document.getElementById('sun-dot');
+    if(dot){ dot.setAttribute('cx', x); dot.setAttribute('cy', y); }
+    document.getElementById('sunrise-t').textContent = sr.toLocaleTimeString('kk-KZ',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('sunset-t').textContent = ss.toLocaleTimeString('kk-KZ',{hour:'2-digit',minute:'2-digit'});
   }
 }
 
-// ===============================================================
-// Load city
-// ===============================================================
-async function loadCity(name, lat, lon) {
+function renderForecast(data){
+  const d = data.daily;
+  const grid = document.getElementById('forecast-grid');
+  grid.innerHTML = '';
+  for(let i=0;i<7;i++){
+    const date = new Date(d.time[i]);
+    const w = WMO[d.weather_code[i]] || {e:'🌡️',t:'—'};
+    const card = document.createElement('div');
+    card.className = 'fc-card tilt-card';
+    card.style.animation = `card-in .5s ease ${i*.06}s both`;
+    card.innerHTML = `
+      <div class="fc-day">${i===0?'Бүгін':DAYS[date.getDay()]}</div>
+      <div class="fc-date">${date.getDate()} ${MONTHS[date.getMonth()].slice(0,3)}</div>
+      <div class="fc-icon">${w.e}</div>
+      <div class="fc-hi">${Math.round(conv(d.temperature_2m_max[i]))}${unitSym()}</div>
+      <div class="fc-lo">${Math.round(conv(d.temperature_2m_min[i]))}${unitSym()}</div>
+    `;
+    grid.appendChild(card);
+  }
+  attachTilt();
+}
+
+async function loadCity(name, lat, lon){
   currentCity = name;
   currentCoords = {lat, lon};
   document.getElementById('weather-card').innerHTML = '<div class="wc-loading">Деректер жүктелуде…</div>';
-  try {
+  try{
     const data = await fetchWeather(lat, lon);
     currentData = data;
-    const kzName = {
-      'Almaty':'Алматы','Astana':'Астана','Shymkent':'Шымкент',
-      'Aktobe':'Ақтөбе','Atyrau':'Атырау','Oral':'Орал','Kostanay':'Қостанай'
-    }[name] || name;
-    renderCurrent(data, kzName);
+    renderCurrent(data, CITY_KK[name] || name);
     renderForecast(data);
-  } catch (e) {
+  }catch(e){
     document.getElementById('weather-card').innerHTML = '<div class="wc-loading">Қате: деректерді жүктеу мүмкін болмады</div>';
     console.error(e);
   }
 }
 
-// ===============================================================
-// Events
-// ===============================================================
+// ========================================================
+// Chip handlers
+// ========================================================
 document.querySelectorAll('.chip').forEach(btn => {
   btn.addEventListener('click', () => {
     loadCity(btn.dataset.city, parseFloat(btn.dataset.lat), parseFloat(btn.dataset.lon));
@@ -145,133 +159,329 @@ document.querySelectorAll('.ut-btn').forEach(btn => {
     document.querySelectorAll('.ut-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     currentUnit = btn.dataset.unit;
-    if (currentData) {
-      renderCurrent(currentData, {'Almaty':'Алматы','Astana':'Астана','Shymkent':'Шымкент','Aktobe':'Ақтөбе','Atyrau':'Атырау','Oral':'Орал','Kostanay':'Қостанай'}[currentCity]||currentCity);
-      renderForecast(currentData);
-    }
+    if(currentData){ renderCurrent(currentData, CITY_KK[currentCity]||currentCity); renderForecast(currentData); }
   });
 });
 
-// City search via geocoding
-async function searchCity(q) {
-  if (!q.trim()) return;
-  try {
+async function searchCity(q){
+  if(!q.trim()) return;
+  try{
     const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=ru`);
     const j = await r.json();
-    if (j.results && j.results[0]) {
+    if(j.results && j.results[0]){
       const res = j.results[0];
       loadCity(res.name, res.latitude, res.longitude);
-    } else {
-      alert('Қала табылмады');
-    }
-  } catch(e){ alert('Іздеу қатесі'); }
+    }else alert('Қала табылмады');
+  }catch(e){ alert('Іздеу қатесі'); }
 }
-document.getElementById('search-btn').addEventListener('click', () => {
-  searchCity(document.getElementById('city-input').value);
-});
-document.getElementById('city-input').addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') searchCity(e.target.value);
-});
+document.getElementById('search-btn').addEventListener('click', () => searchCity(document.getElementById('city-input').value));
+document.getElementById('city-input').addEventListener('keypress', e => { if(e.key==='Enter') searchCity(e.target.value); });
 
-// ===============================================================
+// ========================================================
 // Theme toggle
-// ===============================================================
+// ========================================================
 document.getElementById('theme').addEventListener('click', () => {
-  const current = document.documentElement.getAttribute('data-theme');
-  document.documentElement.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
-  localStorage.setItem('theme', document.documentElement.getAttribute('data-theme'));
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur==='dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
 });
-// restore theme
-if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme','dark');
+if(localStorage.getItem('theme')==='dark') document.documentElement.setAttribute('data-theme','dark');
 
-// ===============================================================
-// River level bars — set width based on data-level
-// ===============================================================
+// ========================================================
+// River bars
+// ========================================================
 document.querySelectorAll('.river-card').forEach(c => {
-  const l = c.dataset.level;
-  c.querySelector('.fill').style.setProperty('--w', l+'%');
+  c.querySelector('.fill').style.setProperty('--w', c.dataset.level+'%');
 });
 
-// ===============================================================
-// Particle background — floating dots
-// ===============================================================
+// ========================================================
+// Particle network background
+// ========================================================
 const canvas = document.getElementById('particles');
 const ctx = canvas.getContext('2d');
 let particles = [];
-
-function resize(){
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
-
+function resize1(){ canvas.width=innerWidth; canvas.height=innerHeight; }
+resize1(); addEventListener('resize', resize1);
 function createParticles(){
   particles = [];
-  const count = Math.floor(window.innerWidth / 20);
-  for (let i=0;i<count;i++){
-    particles.push({
-      x: Math.random()*canvas.width,
-      y: Math.random()*canvas.height,
-      r: Math.random()*2 + 0.5,
-      vx: (Math.random()-.5)*0.3,
-      vy: (Math.random()-.5)*0.3,
-      opacity: Math.random()*0.5 + 0.2
-    });
-  }
+  const n = Math.floor(innerWidth/22);
+  for(let i=0;i<n;i++) particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*2+.5,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.5+.2});
 }
 createParticles();
-
-function animate(){
+function animatePart(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  particles.forEach(p => {
-    p.x += p.vx; p.y += p.vy;
-    if (p.x<0||p.x>canvas.width) p.vx *= -1;
-    if (p.y<0||p.y>canvas.height) p.vy *= -1;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-    ctx.fillStyle = `rgba(47,128,237,${p.opacity})`;
-    ctx.fill();
-  });
-  // Draw connecting lines
-  for (let i=0;i<particles.length;i++){
-    for (let j=i+1;j<particles.length;j++){
-      const dx = particles[i].x - particles[j].x;
-      const dy = particles[i].y - particles[j].y;
-      const d = Math.sqrt(dx*dx + dy*dy);
-      if (d < 120){
-        ctx.beginPath();
-        ctx.moveTo(particles[i].x, particles[i].y);
-        ctx.lineTo(particles[j].x, particles[j].y);
-        ctx.strokeStyle = `rgba(47,128,237,${.15*(1-d/120)})`;
-        ctx.lineWidth = 0.6;
-        ctx.stroke();
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>canvas.width)p.vx*=-1;if(p.y<0||p.y>canvas.height)p.vy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(47,128,237,${p.o})`;ctx.fill();});
+  for(let i=0;i<particles.length;i++) for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y, d=Math.sqrt(dx*dx+dy*dy);if(d<120){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=`rgba(47,128,237,${.15*(1-d/120)})`;ctx.lineWidth=.6;ctx.stroke();}}
+  requestAnimationFrame(animatePart);
+}
+animatePart();
+
+// ========================================================
+// Weather FX overlay — rain, snow, thunder
+// ========================================================
+const wfx = document.getElementById('weather-fx');
+const wctx = wfx.getContext('2d');
+let fxDrops = [], fxFlakes = [], fxFog = 0, lightningT = 0;
+let fxMode = 'clear';
+function resize2(){ wfx.width=innerWidth; wfx.height=innerHeight; }
+resize2(); addEventListener('resize', resize2);
+
+function startWeatherFx(mode){
+  fxMode = mode;
+  fxDrops = [];
+  fxFlakes = [];
+  if(mode==='rain' || mode==='thunder'){
+    for(let i=0;i<180;i++) fxDrops.push({x:Math.random()*wfx.width,y:Math.random()*wfx.height,l:10+Math.random()*20,v:8+Math.random()*8});
+  }
+  if(mode==='snow'){
+    for(let i=0;i<120;i++) fxFlakes.push({x:Math.random()*wfx.width,y:Math.random()*wfx.height,r:1+Math.random()*3,v:.5+Math.random()*1.5,dx:(Math.random()-.5)*.8});
+  }
+}
+function animateWeatherFx(){
+  wctx.clearRect(0,0,wfx.width,wfx.height);
+  if(fxMode==='rain' || fxMode==='thunder'){
+    wctx.strokeStyle = 'rgba(47,128,237,.45)';
+    wctx.lineWidth = 1.2;
+    fxDrops.forEach(d=>{
+      wctx.beginPath();
+      wctx.moveTo(d.x, d.y);
+      wctx.lineTo(d.x-2, d.y+d.l);
+      wctx.stroke();
+      d.y += d.v;
+      d.x -= 1;
+      if(d.y > wfx.height){ d.y = -20; d.x = Math.random()*wfx.width; }
+    });
+    if(fxMode==='thunder'){
+      if(Math.random() < 0.005) lightningT = 15;
+      if(lightningT > 0){
+        wctx.fillStyle = `rgba(255,255,255,${lightningT/15*.4})`;
+        wctx.fillRect(0,0,wfx.width,wfx.height);
+        lightningT--;
       }
     }
   }
-  requestAnimationFrame(animate);
+  if(fxMode==='snow'){
+    wctx.fillStyle = 'rgba(255,255,255,.9)';
+    fxFlakes.forEach(f=>{
+      wctx.beginPath();
+      wctx.arc(f.x, f.y, f.r, 0, Math.PI*2);
+      wctx.fill();
+      f.y += f.v;
+      f.x += f.dx;
+      if(f.y > wfx.height){ f.y = -10; f.x = Math.random()*wfx.width; }
+    });
+  }
+  requestAnimationFrame(animateWeatherFx);
 }
-animate();
+animateWeatherFx();
 
-// ===============================================================
-// Scroll reveal
-// ===============================================================
-const io = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting){
-      e.target.style.opacity = 1;
-      e.target.style.transform = 'translateY(0)';
-    }
+// ========================================================
+// 3D Tilt cards
+// ========================================================
+function attachTilt(){
+  document.querySelectorAll('.tilt-card').forEach(c => {
+    c.removeEventListener('mousemove', c._tilt);
+    c._tilt = e => {
+      const r = c.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5;
+      const y = (e.clientY - r.top) / r.height - .5;
+      c.style.transform = `perspective(1000px) rotateX(${-y*8}deg) rotateY(${x*8}deg) translateY(-4px)`;
+    };
+    c._reset = () => { c.style.transform = ''; };
+    c.addEventListener('mousemove', c._tilt);
+    c.addEventListener('mouseleave', c._reset);
   });
-}, {threshold:0.15});
-document.querySelectorAll('.section, .fc-card, .river-card, .stat-card, .feat').forEach(el => {
-  el.style.opacity = 0;
-  el.style.transform = 'translateY(30px)';
+}
+attachTilt();
+
+// ========================================================
+// Custom cursor
+// ========================================================
+const cur = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx=0, my=0, rx=0, ry=0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cur.style.left = mx+'px'; cur.style.top = my+'px';
+});
+function animCursor(){
+  rx += (mx - rx)*.15;
+  ry += (my - ry)*.15;
+  ring.style.left = rx+'px'; ring.style.top = ry+'px';
+  requestAnimationFrame(animCursor);
+}
+animCursor();
+document.addEventListener('mouseover', e => {
+  if(e.target.closest('a,button,.chip,.tilt-card,input')) ring.classList.add('hover');
+  else ring.classList.remove('hover');
+});
+
+// ========================================================
+// Hero mouse-follow glow
+// ========================================================
+const heroGlow = document.getElementById('hero-glow');
+const hero = document.querySelector('.hero');
+hero.addEventListener('mousemove', e => {
+  const r = hero.getBoundingClientRect();
+  heroGlow.style.transform = `translate(${e.clientX - r.left - 200}px, ${e.clientY - r.top - 200}px)`;
+});
+
+// ========================================================
+// Scroll progress
+// ========================================================
+const sp = document.getElementById('scroll-progress');
+addEventListener('scroll', () => {
+  const h = document.documentElement.scrollHeight - innerHeight;
+  sp.style.width = (scrollY/h*100)+'%';
+});
+
+// ========================================================
+// Scroll reveal
+// ========================================================
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.style.opacity=1; e.target.style.transform='translateY(0)'; }});
+}, {threshold:.15});
+document.querySelectorAll('.section, .fc-card, .river-card, .stat-card, .feat, .sun-card').forEach(el => {
+  el.style.opacity=0; el.style.transform='translateY(30px)';
   el.style.transition = 'opacity .8s ease, transform .8s ease';
   io.observe(el);
 });
 
-// ===============================================================
+// ========================================================
+// Counter animation on stats
+// ========================================================
+const counterIO = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(!e.isIntersecting) return;
+    const el = e.target;
+    const target = parseInt(el.dataset.count);
+    if(!target || el.dataset.done) return;
+    el.dataset.done = '1';
+    let v = 0;
+    const step = Math.max(1, Math.floor(target/40));
+    const t = setInterval(() => {
+      v += step;
+      if(v >= target){ v = target; clearInterval(t); el.textContent = target+'+'; }
+      else el.textContent = v;
+    }, 25);
+  });
+}, {threshold:.5});
+document.querySelectorAll('[data-count]').forEach(el => counterIO.observe(el));
+
+// ========================================================
+// Intro splash dismiss
+// ========================================================
+setTimeout(() => document.getElementById('intro').classList.add('hide'), 1400);
+
+// ========================================================
+// Konami code -> retro mode + confetti
+// ========================================================
+const konami = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let kbuf = [];
+document.addEventListener('keydown', e => {
+  kbuf.push(e.key.toLowerCase().replace('arrowup','ArrowUp').replace('arrowdown','ArrowDown').replace('arrowleft','ArrowLeft').replace('arrowright','ArrowRight'));
+  if(kbuf.length > 10) kbuf.shift();
+  const k = kbuf.map(x => {
+    if(x==='arrowup') return 'ArrowUp';
+    if(x==='arrowdown') return 'ArrowDown';
+    if(x==='arrowleft') return 'ArrowLeft';
+    if(x==='arrowright') return 'ArrowRight';
+    return x;
+  });
+  if(JSON.stringify(k) === JSON.stringify(konami)){
+    triggerRetro();
+    kbuf = [];
+  }
+});
+function triggerRetro(){
+  const html = document.documentElement;
+  const isRetro = html.getAttribute('data-mode') === 'retro';
+  html.setAttribute('data-mode', isRetro ? '' : 'retro');
+  const badge = document.getElementById('retro-badge');
+  badge.classList.add('show');
+  setTimeout(() => badge.classList.remove('show'), 3000);
+  fireConfetti();
+}
+
+// ========================================================
+// Confetti
+// ========================================================
+const conf = document.getElementById('confetti');
+const cctx = conf.getContext('2d');
+function resize3(){ conf.width=innerWidth; conf.height=innerHeight; }
+resize3(); addEventListener('resize', resize3);
+let confPieces = [];
+function fireConfetti(){
+  for(let i=0;i<200;i++){
+    confPieces.push({
+      x: innerWidth/2, y: innerHeight/2,
+      vx: (Math.random()-.5)*14,
+      vy: (Math.random()-.7)*16,
+      g: .3,
+      r: Math.random()*6+3,
+      color: ['#2F80ED','#2AC3BD','#F5B942','#E25C5C','#4AE3A8','#ff00ff','#39ff14'][Math.floor(Math.random()*7)],
+      rot: Math.random()*Math.PI*2,
+      vrot: (Math.random()-.5)*.2,
+      life: 120
+    });
+  }
+}
+function animConf(){
+  cctx.clearRect(0,0,conf.width,conf.height);
+  confPieces = confPieces.filter(p => p.life > 0);
+  confPieces.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += p.g; p.rot += p.vrot; p.life--;
+    cctx.save();
+    cctx.translate(p.x, p.y);
+    cctx.rotate(p.rot);
+    cctx.fillStyle = p.color;
+    cctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*1.5);
+    cctx.restore();
+  });
+  requestAnimationFrame(animConf);
+}
+animConf();
+
+// First-visit confetti (no localStorage flag = first time)
+if(!localStorage.getItem('visited')){
+  setTimeout(() => fireConfetti(), 2000);
+  localStorage.setItem('visited','1');
+}
+
+// ========================================================
+// Sound (ambient rain/wind via Web Audio)
+// ========================================================
+let audioCtx = null, audioNode = null, soundOn = false;
+document.getElementById('sound').addEventListener('click', () => {
+  if(!audioCtx){ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+  if(soundOn){
+    if(audioNode){ audioNode.stop(); audioNode = null; }
+    document.getElementById('sound').textContent = '🔇';
+    soundOn = false;
+  } else {
+    // White noise for rain ambience
+    const bufferSize = 2 * audioCtx.sampleRate;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++) output[i] = Math.random()*2-1;
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    noise.loop = true;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = currentFx==='rain'||currentFx==='thunder' ? 2000 : 400;
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.05;
+    noise.connect(filter).connect(gain).connect(audioCtx.destination);
+    noise.start();
+    audioNode = noise;
+    document.getElementById('sound').textContent = '🔊';
+    soundOn = true;
+  }
+});
+
+// ========================================================
 // Init
-// ===============================================================
+// ========================================================
 loadCity('Almaty', 43.238, 76.889);

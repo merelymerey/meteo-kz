@@ -4,12 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Meteo.KZ — Ауа райы &amp; тасқын мониторингі</title>
+<link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌤️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+<!-- Intro splash -->
+<div id="intro" class="intro">
+  <div class="intro-logo">
+    <div class="intro-dot"></div>
+    <span>Meteo<b>.KZ</b></span>
+  </div>
+</div>
+
+<!-- Scroll progress -->
+<div class="scroll-progress" id="scroll-progress"></div>
+
+<!-- Custom cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
 
 <!-- Animated background -->
 <div class="bg-fx">
@@ -20,6 +36,12 @@
   <div class="cloud c4"></div>
   <canvas id="particles"></canvas>
 </div>
+
+<!-- Weather overlay (rain / snow) -->
+<canvas id="weather-fx" class="weather-fx"></canvas>
+
+<!-- Retro mode badge -->
+<div class="retro-badge" id="retro-badge">🕹️ RETRO MODE ACTIVATED</div>
 
 <!-- Nav -->
 <nav class="nav">
@@ -34,6 +56,7 @@
     <a href="#about">Жоба туралы</a>
   </div>
   <div class="nav-actions">
+    <button id="sound" class="icon-btn sound-btn" title="Дыбыс">🔇</button>
     <button id="theme" class="icon-btn" title="Тема"></button>
     <button class="btn-primary">Кіру</button>
   </div>
@@ -41,6 +64,7 @@
 
 <!-- Hero -->
 <header class="hero" id="forecast">
+  <div class="hero-glow" id="hero-glow"></div>
   <div class="hero-inner">
     <div class="hero-left">
       <div class="tag"><span class="pulse"></span>LIVE · Meteo.KZ нақты уақытта</div>
@@ -65,7 +89,7 @@
     </div>
 
     <div class="hero-right">
-      <div class="weather-card" id="weather-card">
+      <div class="weather-card tilt-card" id="weather-card">
         <div class="wc-loading">Деректер жүктелуде…</div>
       </div>
     </div>
@@ -76,6 +100,49 @@
     <div class="arrow"></div>
   </div>
 </header>
+
+<!-- Sun arc + wind compass -->
+<section class="section sun-section">
+  <div class="sun-grid">
+    <div class="sun-card tilt-card">
+      <div class="eyebrow">Күн режимі</div>
+      <h3>Күннің шығуы мен батуы</h3>
+      <svg class="sun-arc" viewBox="0 0 400 220">
+        <defs>
+          <linearGradient id="arcGrad" x1="0" x2="1">
+            <stop offset="0%" stop-color="#F5B942"/>
+            <stop offset="50%" stop-color="#E25C5C"/>
+            <stop offset="100%" stop-color="#2F80ED"/>
+          </linearGradient>
+        </defs>
+        <path d="M 40 200 Q 200 -40 360 200" stroke="rgba(47,128,237,.15)" stroke-width="2" fill="none" stroke-dasharray="4 6"/>
+        <path d="M 40 200 Q 200 -40 360 200" stroke="url(#arcGrad)" stroke-width="3" fill="none" opacity=".55"/>
+        <line x1="20" y1="200" x2="380" y2="200" stroke="rgba(15,35,69,.1)"/>
+        <circle id="sun-dot" cx="200" cy="20" r="12" fill="#F5B942" filter="drop-shadow(0 0 10px rgba(245,185,66,.7))"/>
+        <text x="40" y="218" font-size="11" fill="currentColor" opacity=".6" id="sunrise-t">—</text>
+        <text x="320" y="218" font-size="11" fill="currentColor" opacity=".6" id="sunset-t">—</text>
+      </svg>
+    </div>
+
+    <div class="sun-card wind-card tilt-card">
+      <div class="eyebrow">Желдің бағыты</div>
+      <h3 id="wind-title">— км/сағ</h3>
+      <svg class="compass" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="80" stroke="rgba(47,128,237,.15)" stroke-width="2" fill="none"/>
+        <circle cx="100" cy="100" r="60" stroke="rgba(47,128,237,.08)" stroke-width="1" fill="none" stroke-dasharray="2 4"/>
+        <text x="100" y="25" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor">С</text>
+        <text x="100" y="185" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor">О</text>
+        <text x="20" y="105" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor">Б</text>
+        <text x="180" y="105" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor">Ш</text>
+        <g id="compass-arrow" style="transition:transform 1s cubic-bezier(.34,1.56,.64,1);transform-origin:100px 100px">
+          <polygon points="100,40 92,105 100,90 108,105" fill="#2F80ED"/>
+          <polygon points="100,160 92,95 100,110 108,95" fill="rgba(47,128,237,.3)"/>
+        </g>
+        <circle cx="100" cy="100" r="5" fill="#0f2345"/>
+      </svg>
+    </div>
+  </div>
+</section>
 
 <!-- Forecast -->
 <section class="section" id="forecast-section">
@@ -106,12 +173,12 @@
       </div>
     </div>
     <div class="rivers">
-      <div class="river-card" data-level="58"><div class="rc-head"><span>Жайық</span><span class="pct">58%</span></div><div class="bar"><div class="fill g"></div></div><div class="rc-note">Атырау — қалыпты</div></div>
-      <div class="river-card" data-level="74"><div class="rc-head"><span>Ертіс</span><span class="pct">74%</span></div><div class="bar"><div class="fill y"></div></div><div class="rc-note">Павлодар — жоғары</div></div>
-      <div class="river-card" data-level="92"><div class="rc-head"><span>Тобыл</span><span class="pct">92%</span></div><div class="bar"><div class="fill r"></div></div><div class="rc-note">Қостанай — қауіпті</div></div>
-      <div class="river-card" data-level="45"><div class="rc-head"><span>Ыле</span><span class="pct">45%</span></div><div class="bar"><div class="fill g"></div></div><div class="rc-note">Алматы обл. — қалыпты</div></div>
-      <div class="river-card" data-level="67"><div class="rc-head"><span>Сырдария</span><span class="pct">67%</span></div><div class="bar"><div class="fill y"></div></div><div class="rc-note">Қызылорда — жоғары</div></div>
-      <div class="river-card" data-level="81"><div class="rc-head"><span>Есіл</span><span class="pct">81%</span></div><div class="bar"><div class="fill r"></div></div><div class="rc-note">Петропавл — қауіпті</div></div>
+      <div class="river-card tilt-card" data-level="58"><div class="rc-head"><span>Жайық</span><span class="pct">58%</span></div><div class="bar"><div class="fill g"></div></div><div class="rc-note">Атырау — қалыпты</div></div>
+      <div class="river-card tilt-card" data-level="74"><div class="rc-head"><span>Ертіс</span><span class="pct">74%</span></div><div class="bar"><div class="fill y"></div></div><div class="rc-note">Павлодар — жоғары</div></div>
+      <div class="river-card tilt-card" data-level="92"><div class="rc-head"><span>Тобыл</span><span class="pct">92%</span></div><div class="bar"><div class="fill r"></div></div><div class="rc-note">Қостанай — қауіпті</div></div>
+      <div class="river-card tilt-card" data-level="45"><div class="rc-head"><span>Ыле</span><span class="pct">45%</span></div><div class="bar"><div class="fill g"></div></div><div class="rc-note">Алматы обл. — қалыпты</div></div>
+      <div class="river-card tilt-card" data-level="67"><div class="rc-head"><span>Сырдария</span><span class="pct">67%</span></div><div class="bar"><div class="fill y"></div></div><div class="rc-note">Қызылорда — жоғары</div></div>
+      <div class="river-card tilt-card" data-level="81"><div class="rc-head"><span>Есіл</span><span class="pct">81%</span></div><div class="bar"><div class="fill r"></div></div><div class="rc-note">Петропавл — қауіпті</div></div>
     </div>
   </div>
 </section>
@@ -119,10 +186,10 @@
 <!-- Stats -->
 <section class="section stats" id="map">
   <div class="stats-grid">
-    <div class="stat-card"><div class="big">17</div><div class="lbl">Облыс қамтылған</div></div>
-    <div class="stat-card"><div class="big">250+</div><div class="lbl">Метеостанция</div></div>
-    <div class="stat-card"><div class="big">24/7</div><div class="lbl">Мониторинг</div></div>
-    <div class="stat-card"><div class="big">5 мин</div><div class="lbl">Жаңару жиілігі</div></div>
+    <div class="stat-card tilt-card"><div class="big" data-count="17">0</div><div class="lbl">Облыс қамтылған</div></div>
+    <div class="stat-card tilt-card"><div class="big" data-count="250">0</div><div class="lbl">Метеостанция</div></div>
+    <div class="stat-card tilt-card"><div class="big">24/7</div><div class="lbl">Мониторинг</div></div>
+    <div class="stat-card tilt-card"><div class="big">5 мин</div><div class="lbl">Жаңару жиілігі</div></div>
   </div>
 </section>
 
@@ -133,11 +200,12 @@
     <h2>Ашық дерек — <span class="gradient">қауіпсіз өмір</span></h2>
     <p>Meteo.KZ — Қазақстанның ауа-райы мен табиғи қауіптерді ашық түрде бақылайтын платформа. Біз мемлекеттік метеостанциялар мен Open-Meteo API-мен интеграцияланамыз. Мақсат — әр азаматтың қолында уақтылы және дұрыс ақпарат болуы.</p>
     <div class="feature-grid">
-      <div class="feat"><div class="feat-ic">⚡</div><h4>Жылдам</h4><p>Деректер әр 5 минут сайын жаңарады.</p></div>
-      <div class="feat"><div class="feat-ic">🔓</div><h4>Ашық</h4><p>Open API арқылы барлық мәлімет қолжетімді.</p></div>
-      <div class="feat"><div class="feat-ic">🛰️</div><h4>Дәл</h4><p>Спутниктік бақылау + жергілікті станциялар.</p></div>
-      <div class="feat"><div class="feat-ic">📱</div><h4>Жайлы</h4><p>Кез келген құрылғыда жұмыс істейді.</p></div>
+      <div class="feat tilt-card"><div class="feat-ic">⚡</div><h4>Жылдам</h4><p>Деректер әр 5 минут сайын жаңарады.</p></div>
+      <div class="feat tilt-card"><div class="feat-ic">🔓</div><h4>Ашық</h4><p>Open API арқылы барлық мәлімет қолжетімді.</p></div>
+      <div class="feat tilt-card"><div class="feat-ic">🛰️</div><h4>Дәл</h4><p>Спутниктік бақылау + жергілікті станциялар.</p></div>
+      <div class="feat tilt-card"><div class="feat-ic">📱</div><h4>Жайлы</h4><p>Кез келген құрылғыда жұмыс істейді.</p></div>
     </div>
+    <div class="easter-hint">💡 Сыр: ↑↑↓↓←→←→BA</div>
   </div>
 </section>
 
@@ -150,6 +218,8 @@
     </div>
   </div>
 </footer>
+
+<canvas id="confetti" class="confetti"></canvas>
 
 <script src="app.js"></script>
 </body>
