@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meteo.KZ — Ауа райы &amp; тасқын мониторингі</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg-fx">
+  <div class="sun"></div>
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="cloud c3"></div>
+  <div class="cloud c4"></div>
+  <canvas id="particles"></canvas>
+</div>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="brand">
+    <div class="logo-dot"></div>
+    <span>Meteo<b>.KZ</b></span>
+  </div>
+  <div class="nav-links">
+    <a href="#forecast" class="active">Болжам</a>
+    <a href="#floods">Тасқын</a>
+    <a href="#map">Карта</a>
+    <a href="#about">Жоба туралы</a>
+  </div>
+  <div class="nav-actions">
+    <button id="theme" class="icon-btn" title="Тема"></button>
+    <button class="btn-primary">Кіру</button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero" id="forecast">
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="tag"><span class="pulse"></span>LIVE · Meteo.KZ нақты уақытта</div>
+      <h1>Қазақстанның <span class="gradient">ауа райы</span><br>және <span class="gradient2">тасқын</span> мониторингі</h1>
+      <p>Метеостанциялардан деректер, өзен деңгейі, ерте ескерту жүйесі. Бір платформа — бір клик.</p>
+
+      <div class="search">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="city-input" type="text" placeholder="Қаланы іздеңіз... (Алматы, Астана, Шымкент)" autocomplete="off">
+        <button id="search-btn">Іздеу</button>
+      </div>
+
+      <div class="chips">
+        <button class="chip" data-city="Almaty" data-lat="43.238" data-lon="76.889">Алматы</button>
+        <button class="chip" data-city="Astana" data-lat="51.169" data-lon="71.449">Астана</button>
+        <button class="chip" data-city="Shymkent" data-lat="42.317" data-lon="69.594">Шымкент</button>
+        <button class="chip" data-city="Aktobe" data-lat="50.283" data-lon="57.167">Ақтөбе</button>
+        <button class="chip" data-city="Atyrau" data-lat="47.117" data-lon="51.917">Атырау</button>
+        <button class="chip" data-city="Oral" data-lat="51.233" data-lon="51.367">Орал</button>
+        <button class="chip" data-city="Kostanay" data-lat="53.214" data-lon="63.632">Қостанай</button>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="weather-card" id="weather-card">
+        <div class="wc-loading">Деректер жүктелуде…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Төмен қарай</span>
+    <div class="arrow"></div>
+  </div>
+</header>
+
+<!-- Forecast -->
+<section class="section" id="forecast-section">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">7 күнге болжам</div>
+      <h2>Апталық <span class="gradient">ауа райы</span></h2>
+    </div>
+    <div class="unit-toggle">
+      <button class="ut-btn active" data-unit="c">°C</button>
+      <button class="ut-btn" data-unit="f">°F</button>
+    </div>
+  </div>
+  <div class="forecast-grid" id="forecast-grid"></div>
+</section>
+
+<!-- Floods -->
+<section class="section floods" id="floods">
+  <div class="floods-grid">
+    <div class="flood-intro">
+      <div class="eyebrow danger">Тасқын қаупі</div>
+      <h2>Өзен деңгейі <span class="gradient2">нақты уақытта</span></h2>
+      <p>Негізгі өзендердегі су деңгейі мен тарихи норма. Деңгей сары зонаға жеткенде — ескерту жіберіледі.</p>
+      <div class="legend">
+        <span class="lg"><i class="dot-g"></i>Қалыпты</span>
+        <span class="lg"><i class="dot-y"></i>Жоғары</span>
+        <span class="lg"><i class="dot-r"></i>Қауіпті</span>
+      </div>
+    </div>
+    <div class="rivers">
+      <div class="river-card" data-level="58"><div class="rc-head"><span>Жайық</span><span class="pct">58%</span></div><div class="bar"><div class="fill g"></div></div><div class="rc-note">Атырау — қалыпты</div></div>
+      <div class="river-card" data-level="74"><div class="rc-head"><span>Ертіс</span><span class="pct">74%</span></div><div class="bar"><div class="fill y"></div></div><div class="rc-note">Павлодар — жоғары</div></div>
+      <div class="river-card" data-level="92"><div class="rc-head"><span>Тобыл</span><span class="pct">92%</span></div><div class="bar"><div class="fill r"></div></div><div class="rc-note">Қостанай — қауіпті</div></div>
+      <div class="river-card" data-level="45"><div class="rc-head"><span>Ыле</span><span class="pct">45%</span></div><div class="bar"><div class="fill g"></div></div><div class="rc-note">Алматы обл. — қалыпты</div></div>
+      <div class="river-card" data-level="67"><div class="rc-head"><span>Сырдария</span><span class="pct">67%</span></div><div class="bar"><div class="fill y"></div></div><div class="rc-note">Қызылорда — жоғары</div></div>
+      <div class="river-card" data-level="81"><div class="rc-head"><span>Есіл</span><span class="pct">81%</span></div><div class="bar"><div class="fill r"></div></div><div class="rc-note">Петропавл — қауіпті</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="section stats" id="map">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="big">17</div><div class="lbl">Облыс қамтылған</div></div>
+    <div class="stat-card"><div class="big">250+</div><div class="lbl">Метеостанция</div></div>
+    <div class="stat-card"><div class="big">24/7</div><div class="lbl">Мониторинг</div></div>
+    <div class="stat-card"><div class="big">5 мин</div><div class="lbl">Жаңару жиілігі</div></div>
+  </div>
+</section>
+
+<!-- About -->
+<section class="section about" id="about">
+  <div class="about-inner">
+    <div class="eyebrow">Біз туралы</div>
+    <h2>Ашық дерек — <span class="gradient">қауіпсіз өмір</span></h2>
+    <p>Meteo.KZ — Қазақстанның ауа-райы мен табиғи қауіптерді ашық түрде бақылайтын платформа. Біз мемлекеттік метеостанциялар мен Open-Meteo API-мен интеграцияланамыз. Мақсат — әр азаматтың қолында уақтылы және дұрыс ақпарат болуы.</p>
+    <div class="feature-grid">
+      <div class="feat"><div class="feat-ic">⚡</div><h4>Жылдам</h4><p>Деректер әр 5 минут сайын жаңарады.</p></div>
+      <div class="feat"><div class="feat-ic">🔓</div><h4>Ашық</h4><p>Open API арқылы барлық мәлімет қолжетімді.</p></div>
+      <div class="feat"><div class="feat-ic">🛰️</div><h4>Дәл</h4><p>Спутниктік бақылау + жергілікті станциялар.</p></div>
+      <div class="feat"><div class="feat-ic">📱</div><h4>Жайлы</h4><p>Кез келген құрылғыда жұмыс істейді.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="foot-inner">
+    <div>© 2026 Meteo.KZ — Ашық платформа</div>
+    <div class="foot-links">
+      <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo API</a>
+      <a href="https://github.com/merelymerey/meteo-kz" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
