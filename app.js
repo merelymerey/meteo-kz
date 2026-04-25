@@ -404,6 +404,30 @@ function triggerRetro(){
   fireConfetti();
 }
 
+// Activate via URL: ?retro=1
+if(new URLSearchParams(location.search).get('retro') === '1'){
+  setTimeout(() => triggerRetro(), 1800);
+}
+
+// ========================================================
+// Claude Mode toggle
+// ========================================================
+function toggleClaude(){
+  const html = document.documentElement;
+  const isClaude = html.getAttribute('data-mode') === 'claude';
+  if(isClaude){
+    html.setAttribute('data-mode','');
+    localStorage.removeItem('claude-mode');
+  } else {
+    html.setAttribute('data-mode','claude');
+    localStorage.setItem('claude-mode','1');
+  }
+}
+const claudeBtn = document.getElementById('claude-mode');
+if(claudeBtn) claudeBtn.addEventListener('click', toggleClaude);
+if(localStorage.getItem('claude-mode')==='1') document.documentElement.setAttribute('data-mode','claude');
+if(new URLSearchParams(location.search).get('claude') === '1') setTimeout(toggleClaude, 1500);
+
 // ========================================================
 // Confetti
 // ========================================================
